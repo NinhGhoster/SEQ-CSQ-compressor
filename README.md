@@ -1,8 +1,8 @@
 # SEQ-CSQ-compressor / thermal-compress
 
-Lossless compression of FLIR SEQ/CSQ radiometric thermal video into **NetCDF4** format.
+High-performance, parallelized compression tool for converting massive proprietary FLIR SEQ/CSQ radiometric thermal video files into the universally supported **NetCDF4** standard.
 
-Converts ~30 GB raw files to ~5–12 GB while preserving all radiometric temperature data, embedded metadata, and random-access playback.
+Reduces raw 37+ GB video files by up to **70%** (yielding ~11 GB files) while fully preserving the true physical thermal noise floor, rapidly embedding physical camera hardware metadata, and enabling instant random-access playback for analysis.
 
 ## Features
 
@@ -14,6 +14,36 @@ Converts ~30 GB raw files to ~5–12 GB while preserving all radiometric tempera
 - **Self-describing Metadata** — automatically embeds the exact `camera_model`, `lens`, `emissivity`, optical `distance`, `relative_humidity`, and frame rate directly into the NetCDF headers using the proprietary FLIR SDK.
 - **Random access** — read any individual frame instantly without decompressing the whole file.
 - **Universal** — `.nc` output is natively readable by Python (`xarray`, `netCDF4`), MATLAB, R, and Julia.
+
+### What Metadata is Preserved?
+The tool physically extracts deep hardware and environmental parameters using the proprietary FLIR SDK and bakes them permanently into the NetCDF file's global attributes. Running `thermal-compress info` will output something like:
+
+```json
+{
+  "global_attributes": {
+    "source_file": "B9.seq",
+    "width": 1024,
+    "height": 768,
+    "num_frames": 25028,
+    "software": "thermal-compress v1.0",
+    "compression": "netcdf4-zlib-shuffle",
+    "camera_model": "FLIR T1040 45__",
+    "camera_serial": "72503206",
+    "camera_part_number": "72501-0303",
+    "lens": "FOL21",
+    "lens_part_number": "T198940",
+    "lens_serial": "74000964",
+    "date": "2025-08-02T07:19:23.845000",
+    "emissivity_original": 0.94,
+    "distance": 2.0,
+    "relative_humidity": 0.5,
+    "reflected_temp": 293.15,
+    "atmosphere_temp": 293.15,
+    "atmospheric_transmission": 0.991,
+    "frame_rate": 14.93
+  }
+}
+```
 
 ## Installation
 
