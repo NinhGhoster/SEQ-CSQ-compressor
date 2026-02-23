@@ -29,7 +29,14 @@ def cli():
               help="Store as scaled int16 for ~2× extra compression.")
 @click.option("--batch", is_flag=True, default=False,
               help="Treat INPUT_PATH as a directory and convert all SEQ/CSQ files.")
-def encode(input_path, output_path, emissivity, experiment, complevel, use_int16, batch):
+@click.option("--workers", type=int, default=0,
+              help="Parallel workers (0 = auto, half CPU cores). Default: 0.")
+@click.option("--batch-size", type=int, default=100,
+              help="Frames per read batch. Larger = faster but more RAM. Default: 100.")
+@click.option("--limit", type=int, default=None,
+              help="Only encode the first N frames (useful for benchmarking).")
+def encode(input_path, output_path, emissivity, experiment, complevel, use_int16,
+           batch, workers, batch_size, limit):
     """Convert SEQ/CSQ file(s) to compressed NetCDF4."""
     from thermal_compress.encoder import encode as _encode, encode_batch
 
@@ -41,6 +48,8 @@ def encode(input_path, output_path, emissivity, experiment, complevel, use_int16
             emissivity=emissivity,
             experiment=experiment,
             config=config,
+            workers=workers,
+            limit=limit,
         )
         click.echo(f"✓ Converted {len(outputs)} file(s):")
         for p in outputs:
@@ -51,6 +60,9 @@ def encode(input_path, output_path, emissivity, experiment, complevel, use_int16
             emissivity=emissivity,
             experiment=experiment,
             config=config,
+            workers=workers,
+            batch_size=batch_size,
+            limit=limit,
         )
         click.echo(f"✓ Written: {out}")
 
