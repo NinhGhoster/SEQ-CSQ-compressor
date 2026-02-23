@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.backends"
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "thermal-compress"
@@ -16,7 +16,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
     "numpy",
@@ -32,3 +31,6 @@ dev = ["pytest", "pytest-cov"]
 
 [project.scripts]
 thermal-compress = "thermal_compress.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["thermal_compress*"]
