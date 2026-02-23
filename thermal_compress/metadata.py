@@ -14,7 +14,8 @@ from typing import Any
 def _import_fnv():
     """Lazy-import the FLIR SDK, raising a clear error if missing."""
     try:
-        import fnv  # type: ignore[import-untyped]
+        import fnv
+        import fnv.file  # submodule must be imported explicitly
         return fnv
     except ImportError as exc:
         raise ImportError(
