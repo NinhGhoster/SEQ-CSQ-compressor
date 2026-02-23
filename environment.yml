@@ -1,0 +1,17 @@
+name: thermal-compress
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - netcdf4
+  - xarray
+  - h5py
+  - click
+  - tqdm
+  - pytest
+  - pip:
+    - -e .
+    # FLIR Science File SDK — install manually per OS:
+    # pip install fnv-<version>-<platform>.whl

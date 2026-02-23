@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.backends"
+
+[project]
+name = "thermal-compress"
+version = "1.0.0"
+description = "Lossless compression of FLIR SEQ/CSQ radiometric video to NetCDF4"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "NinhGhoster" }]
+keywords = ["FLIR", "thermal", "radiometric", "compression", "NetCDF4", "SEQ", "CSQ"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "numpy",
+    "netCDF4",
+    "xarray",
+    "h5py",
+    "click",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[project.scripts]
+thermal-compress = "thermal_compress.cli:cli"
