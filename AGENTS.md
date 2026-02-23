@@ -8,18 +8,40 @@
 - **CLI:** Click
 - **Data:** numpy, netCDF4, xarray, h5py
 - **FLIR SDK:** `fnv` (proprietary, lazy-imported)
+- **Concurrency:** `concurrent.futures.ProcessPoolExecutor`
 - **Testing:** pytest
 
-## Architecture Rules
-1. All FLIR SDK (`fnv`) imports must be **lazy** — wrapped in functions or guarded by try/except so the tool works without the SDK for non-encode tasks.
-2. Compression settings live in `compression.py` as a dataclass. Do not scatter magic numbers.
-3. The CLI (`cli.py`) is a thin layer — it parses arguments and delegates to `encoder`, `decoder`, `verify`.
-4. NetCDF4 files must always include the global attributes defined in `THERMAL_COMPRESSION_SPEC.md`.
+## Architecture Rules & Constraints
+1. **Lazy Imports:** All FLIR SDK (`fnv`) imports must be **lazy** — wrapped in functions or guarded by try/except so the tool works without the SDK for non-encode tasks (`info`, `decode`, `verify`).
+2. **Compression Isolation:** Compression settings live in `compression.py` as a frozen dataclass. Do not scatter magic numbers.
+3. **Multiprocessing Limits:** The FLIR `fnv` library is a compiled C++ extension that is **strictly not thread-safe**. Frame reading must occur sequentially in the main process before being dispatched to the worker pool.
+4. **HDF5 Direct Writes:** `netCDF4` and `h5py` compression pipelines are strictly single-threaded. To achieve multiprocessing, the `encoder.py` manually shuffles and zlib-compresses chunks in Python worker processes, then directly injects the compressed bytes into the file using `h5py.Dataset.id.write_direct_chunk()`.
+5. **Fixed Dimensions:** To use HDF5 direct chunk writes, the `frame` dimension *must* have a fixed size upon creation. Do not use the `UNLIMITED` dimension size or `write_direct_chunk` will fail with an undefined address error.
+6. **Metadata:** NetCDF4 files must always extract and include the global SDK attributes (camera model, lens, exact recording date from frame timestamps, and object parameters like emissivity and distance).
+
+## Data Schema (NetCDF4)
+```
+Dimensions:
+  frame  = <fixed_num_frames>
+  y      = <height>       (e.g. 512)
+  x      = <width>        (e.g. 640)
+
+Variables:
+  temperature(frame, y, x) — float32 or scaled int16
+    units:       "degC" (or "K")
+    long_name:   "Radiometric temperature"
+    chunksizes:  (10, height, width)
+    scale_factor: 0.01 (if int16)
+```
 
 ## Testing
-- Tests use **synthetic numpy arrays** to avoid FLIR SDK dependency.
-- Mock `fnv` in encoder/verify tests.
+- Tests use **synthetic numpy arrays** to avoid the proprietary FLIR SDK dependency in CI.
+- Mock `fnv` in encoder/verify tests (see `tests/test_encoder.py`).
+- Since direct chunk writing requires exact chunk boundaries, tests using tiny files must carefully simulate padding or clamp their chunks.
 - Run: `pytest tests/ -v`
+
+## CLI Layer
+- The CLI (`cli.py`) is a thin wrapper. It only handles argument parsing and `click.echo()` output, delegating all logic to `encoder`, `decoder`, and `verify`.
 
 ## File Conventions
 - Formatting: `black`, `isort`
