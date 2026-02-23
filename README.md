@@ -7,8 +7,10 @@ Converts ~30 GB raw files to ~5–12 GB while preserving all radiometric tempera
 ## Features
 
 - **Extreme Speed** — encodes 37 GB videos in ~3.5 minutes using a custom `multiprocessing` worker pool that bypasses standard single-threaded HDF5 compression bottlenecks.
-- **Lossless** — every single temperature value survives the standard `float32` round-trip.
-- **50–83% compression** — via zlib + HDF5 byte-shuffle. Supports scaled `--int16` packing to cut raw float size in half while maintaining 0.01 °C precision.
+- **Two Precision Modes**:
+  - **Lossless (Default)**: Every single temperature value survives the exact mathematical `float32` round-trip.
+  - **Archival (`--int16`)**: Highly recommended scaled packing that cuts file sizes by roughly 50% while preserving a strict `0.01 °C` precision (well within the physical noise floor of FLIR cameras).
+- **50–83% compression** — via zlib + HDF5 byte-shuffle.
 - **Self-describing Metadata** — automatically embeds the exact `camera_model`, `lens`, `emissivity`, optical `distance`, `relative_humidity`, and frame rate directly into the NetCDF headers using the proprietary FLIR SDK.
 - **Random access** — read any individual frame instantly without decompressing the whole file.
 - **Universal** — `.nc` output is natively readable by Python (`xarray`, `netCDF4`), MATLAB, R, and Julia.
