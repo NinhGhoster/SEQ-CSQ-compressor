@@ -67,13 +67,14 @@ pip install -e .
 ```bash
 # Convert a single file (Best compression & speed)
 thermal-compress encode input.seq -o output.nc \
-  --emissivity 0.9 \
+  --emissivity 0.95 \
   --experiment "Stringybark, 50kW/m, Rep 3" \
-  --workers 12 \
+  --workers 10 \
+  --threshold 299 \
   --int16
 
 # Run a quick 2000-frame benchmark on your machine
-thermal-compress encode input.seq -o output.nc --workers 12 --limit 2000
+thermal-compress encode input.seq -o output.nc --workers 10 --limit 2000 --threshold 299
 
 # Batch convert an entire folder
 thermal-compress encode /path/to/seq_folder/ -o /path/to/output/ --batch --workers 12
@@ -98,6 +99,9 @@ thermal-compress decode output.nc -o frames/ --format npy
 | **Float32 default** (`--workers 1`) | Lossless | ~22 minutes | 20 GB | 46% |
 | **Float32 multi** (`--workers 10`) | Lossless | **3m 42s** | 20 GB | 46% |
 | **Scaled int16** (`--workers 10 --int16`) | 0.01 °C | *~3m 30s* | **11 GB** | **70%** |
+| **Threshold int16** (`--int16 --threshold 299`) | 0.01 °C | *~2m 45s* | **~1.3 GB** | **96%** |
+
+> **Why `--threshold`?** If you are only interested in analyzing fire and high temperatures, the vast majority of your video frame is useless ambient background (~20°C). By providing `--threshold 299`, all pixels below 299°C are converted to a constant `_FillValue`. Because `zlib` thrives on repeating patterns, this causes the compressed file size to absolutely plummet. For the 37 GB `B9.seq`, masking the background brings the final size down from 11 GB to roughly **1.3 GB** (a 96% reduction from raw).
 
 > **Why `--int16`?** Using the `--int16` flag is highly recommended for bulk archival. It drops the precision of the output past the second decimal place (e.g., `21.4391` becomes `21.44`). Since the thermal noise floor (NETD) of high-end FLIR cameras like the T1040 is `~0.02 °C`, discarding these extra noisy decimal digits retains 100% of the true physical sensor data, while drastically boosting `zlib` compression ratios by roughly 50%.
 

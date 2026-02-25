@@ -40,11 +40,22 @@ def _compress_chunk_worker(
     complevel: int,
     use_int16: bool = False,
     scale_factor: float = 0.01,
+    threshold: float | None = None,
 ) -> tuple[int, bytes]:
-    """Worker function: optionally scale, then shuffle and compress a chunk."""
+    """Worker function: optionally threshold & scale, then shuffle and compress a chunk."""
+    # Mask pixels below the threshold with NaN (float32) or fill value (int16)
+    if threshold is not None:
+        frames = frames.copy()  # don't mutate the original batch
+        frames[frames < threshold] = np.nan
+
     if use_int16:
         # Scale and convert to int16 before compressing
-        frames = np.round(frames / scale_factor).astype(np.int16)
+        # NaN pixels become the int16 fill value (-32767)
+        int_frames = np.empty(frames.shape, dtype=np.int16)
+        mask = np.isnan(frames)
+        int_frames[~mask] = np.round(frames[~mask] / scale_factor).astype(np.int16)
+        int_frames[mask] = -32767  # CF-convention _FillValue
+        frames = int_frames
     
     # itemsize is 2 for int16, 4 for float32
     itemsize = frames.dtype.itemsize 
@@ -84,6 +95,7 @@ def encode(
     workers: int = 0,
     batch_size: int = 100,
     limit: Optional[int] = None,
+    threshold: Optional[float] = None,
 ) -> Path:
     """Convert a single SEQ/CSQ file to compressed NetCDF4.
 
@@ -100,6 +112,9 @@ def encode(
             chunk size (config.chunk_frames) for direct writes to work.
             Default: 100.
         limit: Only process the first N frames.
+        threshold: If set, mask pixels below this temperature (°C) with
+            NaN (float32) or _FillValue (int16). Dramatically improves
+            compression when most of the frame is below the threshold.
 
     Returns:
         Path to the written NetCDF4 file.
@@ -130,6 +145,8 @@ def encode(
         meta["emissivity"] = float(emissivity)
     if experiment is not None:
         meta["experiment"] = experiment
+    if threshold is not None:
+        meta["threshold_degC"] = float(threshold)
 
     # --- create NetCDF4 via h5py for direct chunk access -----------------
     # NetCDF4 is just HDF5 with specific conventions.
@@ -198,7 +215,6 @@ def encode(
                         pad_shape = (chunk_frames - len(c_frames), height, width)
                         c_frames = np.concatenate([c_frames, np.zeros(pad_shape, dtype=c_frames.dtype)])
 
-                    # Dispatch to worker
                     fut = executor.submit(
                         _compress_chunk_worker,
                         c_frames,
@@ -206,6 +222,7 @@ def encode(
                         config.complevel,
                         config.use_int16,
                         config.scale_factor if config.use_int16 else 1.0,
+                        threshold,
                     )
                     futures.add(fut)
                 
@@ -249,6 +266,7 @@ def encode(
                         config.complevel,
                         config.use_int16,
                         config.scale_factor if config.use_int16 else 1.0,
+                        threshold,
                     )
                     temp_ds.id.write_direct_chunk((chunk_idx, 0, 0), compressed_bytes, filter_mask=0)
                     
@@ -273,6 +291,8 @@ def encode_batch(
     experiment: Optional[str] = None,
     config: CompressionConfig = DEFAULT_CONFIG,
     workers: int = 0,
+    limit: Optional[int] = None,
+    threshold: Optional[float] = None,
 ) -> list[Path]:
     """Batch-convert every SEQ/CSQ file in a directory.
 
@@ -283,6 +303,8 @@ def encode_batch(
         experiment: Experiment description (applied to all files).
         config: Compression settings.
         workers: Number of parallel workers per file.
+        limit: Only process the first N frames per file.
+        threshold: Mask pixels below this temperature (°C).
 
     Returns:
         List of output file paths.
@@ -308,6 +330,8 @@ def encode_batch(
             experiment=experiment,
             config=config,
             workers=workers,
+            limit=limit,
+            threshold=threshold,
         )
         outputs.append(out)
 

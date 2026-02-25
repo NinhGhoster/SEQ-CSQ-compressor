@@ -35,8 +35,10 @@ def cli():
               help="Frames per read batch. Larger = faster but more RAM. Default: 100.")
 @click.option("--limit", type=int, default=None,
               help="Only encode the first N frames (useful for benchmarking).")
+@click.option("--threshold", type=float, default=None,
+              help="Mask pixels below this temperature (°C) to dramatically reduce file size.")
 def encode(input_path, output_path, emissivity, experiment, complevel, use_int16,
-           batch, workers, batch_size, limit):
+           batch, workers, batch_size, limit, threshold):
     """Convert SEQ/CSQ file(s) to compressed NetCDF4."""
     from thermal_compress.encoder import encode as _encode, encode_batch
 
@@ -50,6 +52,7 @@ def encode(input_path, output_path, emissivity, experiment, complevel, use_int16
             config=config,
             workers=workers,
             limit=limit,
+            threshold=threshold,
         )
         click.echo(f"✓ Converted {len(outputs)} file(s):")
         for p in outputs:
@@ -63,6 +66,7 @@ def encode(input_path, output_path, emissivity, experiment, complevel, use_int16
             workers=workers,
             batch_size=batch_size,
             limit=limit,
+            threshold=threshold,
         )
         click.echo(f"✓ Written: {out}")
 
