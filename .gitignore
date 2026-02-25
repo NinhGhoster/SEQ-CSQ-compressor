@@ -3,3 +3,9 @@ __pycache__/
 .pytest_cache/
 SDK/
 *.egg-info/
+.DS_Store
+*.seq
+*.nc
+.DS_Store
+*.seq
+*.nc
