@@ -23,8 +23,8 @@ def cli():
               help="Surface emissivity (e.g. 0.95).")
 @click.option("--experiment", type=str, default=None,
               help="Free-text experiment description.")
-@click.option("--complevel", type=click.IntRange(1, 9), default=6,
-              help="zlib compression level (1–9). Default: 6.")
+@click.option("--complevel", type=click.IntRange(1, 9), default=9,
+              help="zlib compression level (1–9). Default: 9.")
 @click.option("--int16", "use_int16", is_flag=True, default=False,
               help="Store as scaled int16 for ~2× extra compression.")
 @click.option("--batch", is_flag=True, default=False,

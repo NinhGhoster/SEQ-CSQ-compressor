@@ -109,7 +109,7 @@ thermal-compress decode output.nc -o frames/ --format npy
 > **The Compression Pipeline:** When you use `--int16`, the tool runs a three-stage compression pass:
 > 1. **Quantization (`int16`)**: `float32` temperatures are multiplied by 100 and stored as 16-bit integers, halving the raw footprint.
 > 2. **HDF5 Shuffle Filter**: The bytes of these integers are grouped algorithmically to create long repeating sequences.
-> 3. **Deflate (`zlib` level 6)**: The sequences are compressed using universally compatible `zlib`. Level 6 is the engineered "sweet spot." Benchmarks explicitly show that increasing this to Level 9 maxes out CPU time but yields **0% additional file size improvement** due to the chaotic entropy of physical thermal noise.
+> 3. **Deflate (`zlib` level 9)**: The sequences are compressed using universally compatible `zlib` at maximum compression. Although benchmarks show level 6 and level 9 produce nearly identical file sizes for thermal data (due to the chaotic entropy of physical thermal noise), level 9 is used by default to squeeze every last byte.
 ## Project Architecture
 
 ```

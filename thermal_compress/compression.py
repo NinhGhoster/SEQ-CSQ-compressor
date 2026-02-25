@@ -24,7 +24,7 @@ class CompressionConfig:
             gives 0.01 °C precision.
     """
 
-    complevel: int = 6
+    complevel: int = 9
     shuffle: bool = True
     chunk_frames: int = 10
     use_int16: bool = False
@@ -72,7 +72,7 @@ class CompressionConfig:
 # ---- presets ------------------------------------------------------------
 
 DEFAULT_CONFIG = CompressionConfig()
-"""Default: float32, complevel 6, shuffle on."""
+"""Default: float32, complevel 9, shuffle on."""
 
 ARCHIVAL_CONFIG = CompressionConfig(complevel=9, use_int16=True)
 """Archival: scaled int16, complevel 9 — maximum compression."""
