@@ -124,7 +124,7 @@ def encode(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if workers == 0:
-        workers = max(1, os.cpu_count() // 2)
+        workers = max(1, os.cpu_count())
 
     # Enforce batch_size to be a multiple of chunk_frames for direct writes
     chunk_frames = config.chunk_frames

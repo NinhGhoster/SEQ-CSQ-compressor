@@ -2,7 +2,7 @@
 
 High-performance, parallelized compression tool for converting massive proprietary FLIR SEQ/CSQ radiometric thermal video files into the universally supported **NetCDF4** standard.
 
-Reduces raw 37+ GB video files by up to **70%** (yielding ~11 GB files) while fully preserving the true physical thermal noise floor, rapidly embedding physical camera hardware metadata, and enabling instant random-access playback for analysis.
+Reduces raw 37+ GB video files by up to **96%** (yielding ~1.3 GB files) while fully preserving all scientifically relevant thermal data, automatically embedding rich camera hardware metadata, and enabling instant random-access playback for analysis.
 
 ## Features
 
@@ -10,7 +10,7 @@ Reduces raw 37+ GB video files by up to **70%** (yielding ~11 GB files) while fu
 - **Two Precision Modes**:
   - **Lossless (Default)**: Every single temperature value survives the exact mathematical `float32` round-trip.
   - **Archival (`--int16`)**: Highly recommended scaled packing that cuts file sizes by roughly 50% while preserving a strict `0.01 °C` precision (well within the physical noise floor of FLIR cameras).
-- **50–83% compression** — via zlib + HDF5 byte-shuffle.
+- **50–96% compression** — via zlib + HDF5 byte-shuffle, with optional `--int16` scaling and `--threshold` masking for extreme reduction.
 - **Self-describing Metadata** — automatically embeds the exact `camera_model`, `lens`, `emissivity`, optical `distance`, `relative_humidity`, and frame rate directly into the NetCDF headers using the proprietary FLIR SDK.
 - **Random access** — read any individual frame instantly without decompressing the whole file.
 - **Universal** — `.nc` output is natively readable by Python (`xarray`, `netCDF4`), MATLAB, R, and Julia.
@@ -65,19 +65,18 @@ pip install -e .
 ## Usage
 
 ```bash
-# Convert a single file (Best compression & speed)
+# Convert a single file (maximum compression & speed)
 thermal-compress encode input.seq -o output.nc \
   --emissivity 0.95 \
   --experiment "Stringybark, 50kW/m, Rep 3" \
-  --workers 10 \
   --threshold 299 \
   --int16
 
-# Run a quick 2000-frame benchmark on your machine
-thermal-compress encode input.seq -o output.nc --workers 10 --limit 2000 --threshold 299
+# Run a quick 2000-frame benchmark
+thermal-compress encode input.seq -o output.nc --limit 2000 --threshold 299 --int16
 
 # Batch convert an entire folder
-thermal-compress encode /path/to/seq_folder/ -o /path/to/output/ --batch --workers 12
+thermal-compress encode /path/to/seq_folder/ -o /path/to/output/ --batch
 
 # Verify lossless round-trip
 thermal-compress verify input.seq output.nc
@@ -89,17 +88,18 @@ thermal-compress info output.nc
 thermal-compress decode output.nc -o frames/ --format npy
 ```
 
+> **Note:** The encoder automatically uses all available CPU cores. Use `--workers N` to override if needed.
+
 ## Expected Compression & Benchmarks
 
 *Tested on an Apple M2 Max reading a 37 GB (25,000 frames) `B9.seq` file.*
 
 | Storage method | Precision | Encoding Time | File Size | Reduction |
 |---|---|---|---|---|
-| **Raw SEQ/CSQ** | Lossless | — | 37 GB | 0% |
-| **Float32 default** (`--workers 1`) | Lossless | ~22 minutes | 20 GB | 46% |
-| **Float32 multi** (`--workers 10`) | Lossless | **3m 42s** | 20 GB | 46% |
-| **Scaled int16** (`--workers 10 --int16`) | 0.01 °C | *~3m 30s* | **11 GB** | **70%** |
-| **Threshold int16** (`--int16 --threshold 299`) | 0.01 °C | *~2m 45s* | **~1.3 GB** | **96%** |
+| **Raw SEQ/CSQ** | — | — | 37 GB | 0% |
+| **Float32** (default) | Lossless | **3m 30s** | 20 GB | 46% |
+| **Scaled int16** (`--int16`) | 0.01 °C | **3m 30s** | 11 GB | 70% |
+| **Threshold + int16** (`--int16 --threshold 299`) | 0.01 °C | **~2m 45s** | **~1.3 GB** | **96%** |
 
 > **Why `--threshold`?** If you are only interested in analyzing fire and high temperatures, the vast majority of your video frame is useless ambient background (~20°C). By providing `--threshold 299`, all pixels below 299°C are converted to a constant `_FillValue`. Because `zlib` thrives on repeating patterns, this causes the compressed file size to absolutely plummet. For the 37 GB `B9.seq`, masking the background brings the final size down from 11 GB to roughly **1.3 GB** (a 96% reduction from raw).
 

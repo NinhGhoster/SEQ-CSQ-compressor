@@ -30,7 +30,7 @@ def cli():
 @click.option("--batch", is_flag=True, default=False,
               help="Treat INPUT_PATH as a directory and convert all SEQ/CSQ files.")
 @click.option("--workers", type=int, default=0,
-              help="Parallel workers (0 = auto, half CPU cores). Default: 0.")
+              help="Parallel workers (0 = auto, all CPU cores). Default: 0.")
 @click.option("--batch-size", type=int, default=100,
               help="Frames per read batch. Larger = faster but more RAM. Default: 100.")
 @click.option("--limit", type=int, default=None,
