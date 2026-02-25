@@ -2,7 +2,7 @@
 
 High-performance, parallelized compression tool for converting massive proprietary FLIR SEQ/CSQ radiometric thermal video files into the universally supported **NetCDF4** standard.
 
-Reduces raw 37+ GB video files by up to **96%** (yielding ~1.3 GB files) while fully preserving all scientifically relevant thermal data, automatically embedding rich camera hardware metadata, and enabling instant random-access playback for analysis.
+Reduces raw 37+ GB video files by up to **80%** (yielding ~7.5 GB files) while fully preserving all scientifically relevant thermal data, automatically embedding rich camera hardware metadata, and enabling instant random-access playback for analysis.
 
 ## Features
 
@@ -10,8 +10,8 @@ Reduces raw 37+ GB video files by up to **96%** (yielding ~1.3 GB files) while f
 - **Three Precision Modes**:
   - **Lossless (Default)**: Every single temperature value survives the exact mathematical `float32` round-trip.
   - **Archival (`--int16`)**: Highly recommended scaled packing that cuts file sizes by roughly 50% while preserving a strict `0.01 °C` precision.
-  - **Threshold Masking (`--threshold`)**: Extreme compression mode that rounds useless cold background pixels to whole integers (`1 °C` precision) while keeping full float precision for hot anomalies. Drops file sizes by up to 96% while perfectly preserving visual rendering!
-- **50–96% compression** — via zlib + HDF5 byte-shuffle, using the optimized precision modes above.
+  - **Threshold Masking (`--threshold`)**: Extreme compression mode that rounds useless cold background pixels to whole integers (`1 °C` precision) while keeping full float precision for hot anomalies. Drops file sizes by up to 80% while perfectly preserving visual rendering!
+- **50–80% compression** — via zlib + HDF5 byte-shuffle, using the optimized precision modes above.
 - **Self-describing Metadata** — automatically embeds the exact `camera_model`, `lens`, `emissivity`, optical `distance`, `relative_humidity`, and frame rate directly into the NetCDF headers using the proprietary FLIR SDK.
 - **Random access** — read any individual frame instantly without decompressing the whole file.
 - **Universal** — `.nc` output is natively readable by Python (`xarray`, `netCDF4`), MATLAB, R, and Julia.
