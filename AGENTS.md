@@ -18,6 +18,7 @@
 4. **HDF5 Direct Writes:** `netCDF4` and `h5py` compression pipelines are strictly single-threaded. To achieve multiprocessing, the `encoder.py` manually shuffles and zlib-compresses chunks in Python worker processes, then directly injects the compressed bytes into the file using `h5py.Dataset.id.write_direct_chunk()`.
 5. **Fixed Dimensions:** To use HDF5 direct chunk writes, the `frame` dimension *must* have a fixed size upon creation. Do not use the `UNLIMITED` dimension size or `write_direct_chunk` will fail with an undefined address error.
 6. **Metadata:** NetCDF4 files must always extract and include the global SDK attributes (camera model, lens, exact recording date from frame timestamps, and object parameters like emissivity and distance).
+7. **Thresholding:** The `--threshold` behavior must mask cold pixels by rounding them to the nearest integer (`np.round()`), rather than using `NaN` or a fill value. This permanently preserves the file's visual colormap rendering in downstream tools like Firebrand Thermal Analysis, while drastically dropping the entropy for `zlib` compression. Hot pixels (`>= threshold`) must retain their full float precision.
 
 ## Data Schema (NetCDF4)
 ```
