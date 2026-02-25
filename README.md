@@ -67,7 +67,7 @@ pip install -e .
 ```bash
 # Convert a single file (maximum compression & speed)
 thermal-compress encode input.seq -o output.nc \
-  --emissivity 0.95 \
+  --emissivity 0.9 \
   --experiment "Stringybark, 50kW/m, Rep 3" \
   --threshold 299 \
   --int16
