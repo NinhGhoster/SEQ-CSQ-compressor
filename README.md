@@ -7,10 +7,11 @@ Reduces raw 37+ GB video files by up to **96%** (yielding ~1.3 GB files) while f
 ## Features
 
 - **Extreme Speed** — encodes 37 GB videos in ~3.5 minutes using a custom `multiprocessing` worker pool that bypasses standard single-threaded HDF5 compression bottlenecks.
-- **Two Precision Modes**:
+- **Three Precision Modes**:
   - **Lossless (Default)**: Every single temperature value survives the exact mathematical `float32` round-trip.
-  - **Archival (`--int16`)**: Highly recommended scaled packing that cuts file sizes by roughly 50% while preserving a strict `0.01 °C` precision (well within the physical noise floor of FLIR cameras).
-- **50–96% compression** — via zlib + HDF5 byte-shuffle, with optional `--int16` scaling and `--threshold` masking for extreme reduction.
+  - **Archival (`--int16`)**: Highly recommended scaled packing that cuts file sizes by roughly 50% while preserving a strict `0.01 °C` precision.
+  - **Threshold Masking (`--threshold`)**: Extreme compression mode that rounds useless cold background pixels to whole integers (`1 °C` precision) while keeping full float precision for hot anomalies. Drops file sizes by up to 96% while perfectly preserving visual rendering!
+- **50–96% compression** — via zlib + HDF5 byte-shuffle, using the optimized precision modes above.
 - **Self-describing Metadata** — automatically embeds the exact `camera_model`, `lens`, `emissivity`, optical `distance`, `relative_humidity`, and frame rate directly into the NetCDF headers using the proprietary FLIR SDK.
 - **Random access** — read any individual frame instantly without decompressing the whole file.
 - **Universal** — `.nc` output is natively readable by Python (`xarray`, `netCDF4`), MATLAB, R, and Julia.
@@ -112,7 +113,7 @@ thermal-compress decode output.nc -o frames/ --format npy
 ## Project Architecture
 
 ```
-thermal_compress/
+SEQ-CSQ-compressor/
 ├── cli.py            # CLI entry point (Click)
 ├── encoder.py        # SEQ/CSQ → NetCDF4 (Multiprocessing & h5py direct chunk writes)
 ├── decoder.py        # NetCDF4 → raw frames back-conversion
