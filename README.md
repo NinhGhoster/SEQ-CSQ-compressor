@@ -94,14 +94,14 @@ thermal-compress decode output.nc -o frames/ --format npy
 
 *Tested on an Apple M2 Max reading a 37 GB (25,000 frames) `B9.seq` file.*
 
-| Storage method | Precision | Encoding Time | File Size | Reduction |
-|---|---|---|---|---|
-| **Raw SEQ/CSQ** | — | — | 37 GB | 0% |
-| **Float32** (default) | Lossless | **3m 30s** | 20 GB | 46% |
-| **Scaled int16** (`--int16`) | 0.01 °C | **3m 30s** | 11 GB | 70% |
-| **Threshold + int16** (`--int16 --threshold 299`) | 0.01 °C | **~2m 45s** | **~1.3 GB** | **96%** |
+| Storage method | Precision | File Size | Reduction |
+|---|---|---|---|
+| **Raw SEQ/CSQ** | — | 37 GB | 0% |
+| **Float32** (default) | Lossless | 20 GB | 46% |
+| **Scaled int16** (`--int16`) | 0.01 °C | 11 GB | 70% |
+| **Threshold + float32** (`--threshold 299`) | 1 °C background | **~7.5 GB** | **80%** |
 
-> **Why `--threshold`?** If you are only interested in analyzing fire and high temperatures, the vast majority of your video frame is useless ambient background (~20°C). By providing `--threshold 299`, all pixels below 299°C are converted to a constant `_FillValue`. Because `zlib` thrives on repeating patterns, this causes the compressed file size to absolutely plummet. For the 37 GB `B9.seq`, masking the background brings the final size down from 11 GB to roughly **1.3 GB** (a 96% reduction from raw).
+> **How `--threshold` works:** Pixels **below** the threshold are rounded to the nearest whole degree (e.g., `25.77°C` → `26°C`). This preserves the full visual colormap in tools like FTA — you can still see the entire scene. Pixels **at or above** the threshold keep their full precision for scientific analysis. The rounding creates many fewer unique values, which `zlib` compresses dramatically better.
 
 > **Why `--int16`?** Using the `--int16` flag is highly recommended for bulk archival. It drops the precision of the output past the second decimal place (e.g., `21.4391` becomes `21.44`). Since the thermal noise floor (NETD) of high-end FLIR cameras like the T1040 is `~0.02 °C`, discarding these extra noisy decimal digits retains 100% of the true physical sensor data, while drastically boosting `zlib` compression ratios by roughly 50%.
 

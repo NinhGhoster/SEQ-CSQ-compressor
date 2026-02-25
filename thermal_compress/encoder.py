@@ -42,20 +42,22 @@ def _compress_chunk_worker(
     scale_factor: float = 0.01,
     threshold: float | None = None,
 ) -> tuple[int, bytes]:
-    """Worker function: optionally threshold & scale, then shuffle and compress a chunk."""
-    # Mask pixels below the threshold with NaN (float32) or fill value (int16)
+    """Worker function: optionally threshold & scale, then shuffle and compress a chunk.
+    
+    When threshold is set, pixels BELOW the threshold are rounded to the
+    nearest integer (e.g. 25.77 → 26).  This preserves the visual colormap
+    in tools like FTA while creating many fewer unique values for zlib to
+    compress.  Pixels AT or ABOVE the threshold keep their full precision
+    for scientific analysis.
+    """
     if threshold is not None:
         frames = frames.copy()  # don't mutate the original batch
-        frames[frames < threshold] = np.nan
+        cold = frames < threshold
+        frames[cold] = np.round(frames[cold])  # quantize to whole °C
 
     if use_int16:
         # Scale and convert to int16 before compressing
-        # NaN pixels become the int16 fill value (-32767)
-        int_frames = np.empty(frames.shape, dtype=np.int16)
-        mask = np.isnan(frames)
-        int_frames[~mask] = np.round(frames[~mask] / scale_factor).astype(np.int16)
-        int_frames[mask] = -32767  # CF-convention _FillValue
-        frames = int_frames
+        frames = np.round(frames / scale_factor).astype(np.int16)
     
     # itemsize is 2 for int16, 4 for float32
     itemsize = frames.dtype.itemsize 
