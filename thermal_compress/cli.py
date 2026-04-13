@@ -36,7 +36,7 @@ def cli():
 @click.option("--limit", type=int, default=None,
               help="Only encode the first N frames (useful for benchmarking).")
 @click.option("--threshold", type=float, default=None,
-              help="Mask pixels below this temperature (°C) to dramatically reduce file size.")
+              help="Round pixels below this temperature (°C) to the nearest integer for better compression.")
 def encode(input_path, output_path, emissivity, experiment, complevel, use_int16,
            batch, workers, batch_size, limit, threshold):
     """Convert SEQ/CSQ file(s) to compressed NetCDF4."""

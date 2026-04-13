@@ -150,3 +150,33 @@ class TestEncode:
             assert ds.getncattr("experiment") == "Test burn"
         finally:
             ds.close()
+
+    def test_encode_threshold_rounds_only_cold_pixels(self, tmp_path: Path):
+        """Threshold mode should round only pixels below the cutoff."""
+        frames = np.array(
+            [[[25.2, 29.8, 30.0], [30.2, 31.9, 10.49]]],
+            dtype=np.float32,
+        )
+        expected = np.array(
+            [[[25.0, 30.0, 30.0], [30.2, 31.9, 10.0]]],
+            dtype=np.float32,
+        )
+        mock_im = _make_mock_imager(frames)
+
+        fake_seq = tmp_path / "input.seq"
+        fake_seq.touch()
+        out_nc = tmp_path / "output.nc"
+
+        with (
+            patch("thermal_compress.encoder.open_imager", return_value=mock_im),
+            patch("thermal_compress.encoder.extract_metadata", return_value={}),
+        ):
+            encode(fake_seq, out_nc, threshold=30.0)
+
+        ds = nc.Dataset(str(out_nc), "r")
+        try:
+            restored = np.array(ds.variables["temperature"][0, :, :])
+            np.testing.assert_allclose(restored, expected[0], atol=1e-6)
+            assert ds.getncattr("threshold_degC") == 30.0
+        finally:
+            ds.close()

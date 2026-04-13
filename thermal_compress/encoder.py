@@ -107,16 +107,17 @@ def encode(
         emissivity: Surface emissivity to record as a global attribute.
         experiment: Free-text experiment description.
         config: Compression settings (complevel, int16, chunking, etc.).
-        workers: Number of parallel workers.  0 = auto (half the CPU cores).
+        workers: Number of parallel workers. 0 = auto (all CPU cores).
             1 = single-threaded without multiprocessing overhead.
         batch_size: Number of frames to read into memory at once before
             dispatching to a worker. This must be a multiple of the HDF5 
             chunk size (config.chunk_frames) for direct writes to work.
             Default: 100.
         limit: Only process the first N frames.
-        threshold: If set, mask pixels below this temperature (°C) with
-            NaN (float32) or _FillValue (int16). Dramatically improves
-            compression when most of the frame is below the threshold.
+        threshold: If set, round pixels below this temperature (°C) to
+            the nearest integer while leaving hotter pixels unchanged.
+            This preserves colormap rendering while improving zlib
+            compression on colder backgrounds.
 
     Returns:
         Path to the written NetCDF4 file.
@@ -196,8 +197,16 @@ def encode(
         # --- write frames in parallel batches ----------------------------
         pbar = tqdm(total=num_frames, desc="Encoding", unit="frame")
 
+        executor: ProcessPoolExecutor | None = None
         if workers > 1:
-            executor = ProcessPoolExecutor(max_workers=workers)
+            try:
+                executor = ProcessPoolExecutor(max_workers=workers)
+            except (NotImplementedError, PermissionError, OSError):
+                # Some constrained environments disallow the semaphore
+                # primitives required by ProcessPoolExecutor.
+                workers = 1
+
+        if executor is not None:
             futures = set()
             
             idx = 0
@@ -306,7 +315,8 @@ def encode_batch(
         config: Compression settings.
         workers: Number of parallel workers per file.
         limit: Only process the first N frames per file.
-        threshold: Mask pixels below this temperature (°C).
+        threshold: Round pixels below this temperature (°C) to the
+            nearest integer before compression.
 
     Returns:
         List of output file paths.
