@@ -1,4 +1,4 @@
-# SEQ-CSQ-compressor / thermal-compress
+# SEQ-CSQ-compressor / CSQ Compression
 
 High-performance, parallelized compression tool for converting massive proprietary FLIR SEQ/CSQ radiometric thermal video files into the universally supported **NetCDF4** standard.
 
@@ -63,17 +63,17 @@ pip install -e .
 > pip install fnv-<version>-<platform>.whl
 > ```
 
-### ORSU / HPC Setup
+### HPC Setup
 
-The workflow below was used successfully on ORSU HPC for large-scale batch compression.
+The workflow below was used successfully on an HPC system for large-scale batch compression.
 
-Repository location:
+Example repository location:
 
 ```bash
 /data/nguyen_h/proj-6600_3d_firebrand-1128.4.1067/code/SEQ-CSQ-compressor
 ```
 
-SDK location used on ORSU home:
+Example SDK location in home:
 
 ```bash
 /home/nguyen_h/SDK/FileSDK-2024.7.1-cp312-cp312-linux_x86_64.whl
@@ -88,7 +88,7 @@ export MAMBA_ROOT_PREFIX=/home/nguyen_h/micromamba
 /home/nguyen_h/micromamba-bin/micromamba run -n thermal-compress pip install -e .
 ```
 
-Because the SDK wheel depends on newer runtime libraries than the system defaults, the ORSU jobs must export:
+Because the SDK wheel depends on newer runtime libraries than the system defaults, batch jobs may need to export:
 
 ```bash
 ENV_PREFIX=/home/nguyen_h/micromamba/envs/thermal-compress
@@ -142,7 +142,7 @@ thermal-compress encode input.seq -o output.nc --threshold 299
 
 This is the `Threshold + float32` mode from the benchmark table. Do not add `--int16` if you want that exact mode.
 
-### Example ORSU Array Workflow
+### Example HPC Array Workflow
 
 Source tree used:
 
