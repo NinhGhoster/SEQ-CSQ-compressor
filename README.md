@@ -1,4 +1,4 @@
-# SEQ-CSQ-compressor / CSQ Compression
+# SEQ-CSQ-compressor
 
 High-performance, parallelized compression tool for converting massive proprietary FLIR SEQ/CSQ radiometric thermal video files into the universally supported **NetCDF4** standard.
 
@@ -63,7 +63,7 @@ pip install -e .
 > pip install fnv-<version>-<platform>.whl
 > ```
 
-### HPC Setup
+### HPC Usage
 
 The workflow below was used successfully on an HPC system for large-scale batch compression.
 
@@ -134,6 +134,16 @@ thermal-compress decode output.nc -o frames/ --format npy
 
 For very large datasets, the fastest practical HPC strategy is a Slurm array with one thermal file per task, rather than one large monolithic job.
 
+### Recommended configuration
+
+- one thermal file per array task
+- `--cpus-per-task=4`
+- `--mem=16G`
+- `--workers 4`
+- Slurm array concurrency cap such as `%64`
+
+This configuration gives high cluster-wide throughput while keeping per-task memory and CPU usage moderate.
+
 Recommended storage method for bulk compression:
 
 ```bash
@@ -142,7 +152,7 @@ thermal-compress encode input.seq -o output.nc --threshold 299
 
 This is the `Threshold + float32` mode from the benchmark table. Do not add `--int16` if you want that exact mode.
 
-### Example HPC Array Workflow
+### Example Slurm Array Workflow
 
 Source tree used:
 
