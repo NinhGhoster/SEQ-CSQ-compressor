@@ -242,12 +242,15 @@ Why this is better than one large job:
 
 ```
 SEQ-CSQ-compressor/
+├── SDK/               # Bundled platform-specific FLIR FileSDK wheels
 ├── cli.py            # CLI entry point (Click)
 ├── encoder.py        # SEQ/CSQ → NetCDF4 (Multiprocessing & h5py direct chunk writes)
 ├── decoder.py        # NetCDF4 → raw frames back-conversion
 ├── verify.py         # Bitwise roundtrip verification
 ├── metadata.py       # Rich FLIR metadata extraction
-└── compression.py    # Compression logic configuration
+├── compression.py    # Compression logic configuration
+├── environment.yml   # Python environment specification
+└── tests/            # Synthetic-array test suite
 ```
 
 ## Context
